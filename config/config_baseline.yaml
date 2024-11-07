@@ -27,10 +27,10 @@ model_args:     # model에 해당하는 파라미터만 실질적으로 사용�
         dropout: 0.2        # MLP_Base에서 드롭아웃 비율
     CLIP_DeepFM:
         datatype: combined   # basic, context, image, text, combined 중 combined 사용
-        embed_dim: 32       # sparse 벡터를 임베딩할 차원
-        mlp_dims: [512, 256, 128]  # MLP_Base의 히든 레이어 차원 (CLIP 출력 차원이 크므로 더 큰 차원 사용)
+        embed_dim: 16       # sparse 벡터를 임베딩할 차원
+        mlp_dims: [1024, 512, 256, 128]  # MLP_Base의 히든 레이어 차원 (CLIP 출력 차원이 크므로 더 큰 차원 사용)
         batchnorm: True    # MLP_Base에서 배치 정규화 사용 여부
-        dropout: 0.2        # MLP_Base에서 드롭아웃 비율
+        dropout: 0.3        # MLP_Base에서 드롭아웃 비율
         pretrained_model: 'openai/clip-vit-base-patch32'   # CLIP 사전학습 모델
         
 
@@ -46,7 +46,7 @@ dataloader:
 optimizer:
     type: Adam      # 사용가능한 optimizer: torch.optim.Optimizer 클래스 (https://pytorch.org/docs/stable/optim.html#algorithms)
     args:           # 사용하고자 하는 클래스의 파라미터를 참고하여 추가해주시면 되며, 관계가 없는 파라미터는 무시됩니다.
-        lr: 1e-4            # 예) 모든 옵티마이저에서 사용되는 학습률
+        lr: 5e-4            # 예) 모든 옵티마이저에서 사용되는 학습률
         weight_decay: 1e-4  # 예) Adam 등 / L2 정규화 가중치
         amsgrad: False      # 예) Adam 등 / amsgrad 사용 여부
 
@@ -64,7 +64,7 @@ lr_scheduler:
 metrics: [ MSELoss, MAELoss, RMSELoss ]  # 평가 지표. 직접 정의한 loss 클래스 또는 torch.nn.Module 클래스 (https://pytorch.org/docs/stable/nn.html#loss-functions)
 
 train:
-    epochs: 30                          # 학습 에폭 수
+    epochs: 10                          # 학습 에폭 수
     log_dir: saved/log                  # 로그 저장 경로
     ckpt_dir: saved/checkpoint    # 모델 저장 경로
     submit_dir: saved/submit            # 예측 저장 경로
