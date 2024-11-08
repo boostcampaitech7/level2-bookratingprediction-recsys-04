@@ -3,24 +3,43 @@ import numpy as np
 
 from src.ensembles.ensembles import Ensemble
 import argparse
+import yaml
+
+def load_config(config_path):
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    return config['ensemble']
 
 def main(args):
-    file_list = sum(args.ensemble_files, [])
+    if args.config:
+        config = load_config(args.config)
+        file_list = config['files'][0].split(',')
+        args.ensemble_strategy = config['strategy']
+        if 'weight' in config:
+            weights = [float(w) for w in config['weight'].split(',')]
+            weight_sum = sum(weights)
+            args.ensemble_weight = [w/weight_sum for w in weights]
+    else:
+        file_list = sum(args.ensemble_files, [])
+        if args.ensemble_weight:
+            weights = args.ensemble_weight[0]
+            weight_sum = sum(weights)
+            args.ensemble_weight = [w/weight_sum for w in weights]
     
     if len(file_list) < 2:
         raise ValueError("Ensemble할 Model을 적어도 2개 이상 입력해 주세요.")
     
-    en = Ensemble(filenames = file_list,filepath=args.result_path)
+    en = Ensemble(filenames=file_list, filepath=args.result_path)
 
     if args.ensemble_strategy == 'weighted':
-        if args.ensemble_weight: 
-            strategy_title = 'sw-'+'-'.join(map(str,*args.ensemble_weight)) #simple weighted
-            result = en.simple_weighted(*args.ensemble_weight)
+        if args.ensemble_weight:
+            strategy_title = 'sw-'+'-'.join(map(str, args.ensemble_weight))
+            result = en.simple_weighted(args.ensemble_weight)
         else:
-            strategy_title = 'aw' #average weighted
+            strategy_title = 'aw'
             result = en.average_weighted()
     elif args.ensemble_strategy == 'mixed':
-        strategy_title = args.ensemble_strategy.lower() #mixed
+        strategy_title = args.ensemble_strategy.lower()
         result = en.mixed()
     else:
         pass
@@ -75,8 +94,9 @@ if __name__ == "__main__":
     > average weighted : aw
     > mixed : mixed
     '''
-
-    arg("--ensemble_files", nargs='+',required=True,
+    arg('--config', type=str, required=False,
+        help='YAML 설정 파일 경로 (설정 파일 사용시 다른 인자들은 무시됩니다)')
+    arg("--ensemble_files", nargs='+',required=False,
         type=lambda s: [item for item in s.split(',')],
         help='required: 앙상블할 submit 파일명을 쉼표(,)로 구분하여 모두 입력해 주세요. 이 때, .csv와 같은 확장자는 입력하지 않습니다.')
     arg('--ensemble_strategy', type=str, default='weighted',
