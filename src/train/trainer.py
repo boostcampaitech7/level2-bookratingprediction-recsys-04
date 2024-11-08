@@ -41,8 +41,6 @@ def train(args, model, dataloader, logger, setting):
                 x, y = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)], data['rating'].to(args.device)
             elif args.model_args[args.model].datatype == 'text':
                 x, y = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)], data['rating'].to(args.device)
-            elif args.model_args[args.model].datatype == 'mixture':
-                x, y = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device), data['img_vector'].to(args.device)], data['rating'].to(args.device)
             else : 
                 x, y = data[0].to(args.device), data[1].to(args.device)
             y_hat = model(x)
@@ -103,8 +101,6 @@ def valid(args, model, dataloader, loss_fn):
             x, y = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)], data['rating'].to(args.device)
         elif args.model_args[args.model].datatype == 'text':
             x, y = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)], data['rating'].to(args.device)
-        elif args.model_args[args.model].datatype == 'mixture':
-                x, y = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device), data['img_vector'].to(args.device)], data['rating'].to(args.device)
         else : 
                 x, y = data[0].to(args.device), data[1].to(args.device)
         y_hat = model(x)
@@ -132,8 +128,7 @@ def test(args, model, dataloader, setting, checkpoint=None):
             x = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)]
         elif args.model_args[args.model].datatype == 'text':
             x = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)]
-        elif args.model_args[args.model].datatype == 'mixture':
-            x = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device), data['img_vector'].to(args.device)]
+
         else : 
             x = data[0].to(args.device)
         y_hat = model(x)
