@@ -5,10 +5,10 @@ predict: False
 checkpoint: 'saved/checkpoints/Electra.pt'
 seed: 0
 device: cuda # m1칩 mac 경우 'mps'
-model: ELECTRA_Deep_FM
+model: ELECTRA_DeepFM
 
 model_args:
-    ELECTRA_Deep_FM:
+    ELECTRA_DeepFM:
         datatype: text
         vector_create: True # vector 생성 옵션
         embed_dim: 64               # 증가 (16 -> 64): 더 풍부한 특성 표현
