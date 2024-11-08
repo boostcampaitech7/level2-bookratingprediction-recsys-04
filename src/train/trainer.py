@@ -14,8 +14,6 @@ METRIC_NAMES = {
 
 def train(args, model, dataloader, logger, setting):
 
-    if args.wandb:
-        import wandb
     
     minimum_loss = None
 
@@ -43,9 +41,7 @@ def train(args, model, dataloader, logger, setting):
                 x, y = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)], data['rating'].to(args.device)
             elif args.model_args[args.model].datatype == 'text':
                 x, y = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)], data['rating'].to(args.device)
-            elif args.model_args[args.model].datatype == 'mixture':
-                x, y = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device), data['img_vector'].to(args.device)], data['rating'].to(args.device)
-            else:
+            else : 
                 x, y = data[0].to(args.device), data[1].to(args.device)
             y_hat = model(x)
             loss = loss_fn(y_hat, y.float())
@@ -75,14 +71,11 @@ def train(args, model, dataloader, logger, setting):
                 msg += f' | {metric}: {value:.3f}'
             print(msg)
             logger.log(epoch=epoch+1, train_loss=train_loss, valid_loss=valid_loss, valid_metrics=valid_metrics)
-            if args.wandb:
-                wandb.log({f'Train {METRIC_NAMES[args.loss]}': train_loss, 
-                           f'Valid {METRIC_NAMES[args.loss]}': valid_loss, **valid_metrics})
+
         else:  # valid 데이터가 없을 경우
             print(msg)
             logger.log(epoch=epoch+1, train_loss=train_loss)
-            if args.wandb:
-                wandb.log({f'Train {METRIC_NAMES[args.loss]}': train_loss})
+
         
         if args.train.save_best_model:
             best_loss = valid_loss if args.dataset.valid_ratio != 0 else train_loss
@@ -108,10 +101,8 @@ def valid(args, model, dataloader, loss_fn):
             x, y = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)], data['rating'].to(args.device)
         elif args.model_args[args.model].datatype == 'text':
             x, y = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)], data['rating'].to(args.device)
-        elif args.model_args[args.model].datatype == 'mixture':
-            x, y = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device), data['img_vector'].to(args.device)], data['rating'].to(args.device)
-        else:
-            x, y = data[0].to(args.device), data[1].to(args.device)
+        else : 
+                x, y = data[0].to(args.device), data[1].to(args.device)
         y_hat = model(x)
         loss = loss_fn(y.float(), y_hat)
         total_loss += loss.item()
@@ -137,9 +128,7 @@ def test(args, model, dataloader, setting, checkpoint=None):
             x = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)]
         elif args.model_args[args.model].datatype == 'text':
             x = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)]
-        elif args.model_args[args.model].datatype == 'mixture':
-            x, y = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device), data['img_vector'].to(args.device)], data['rating'].to(args.device)
-        else:
+        else : 
             x = data[0].to(args.device)
         y_hat = model(x)
         predicts.extend(y_hat.tolist())

@@ -106,3 +106,12 @@ class Text_DeepFM(nn.Module):
         output_dnn = self.mlp(dense_feature_deep).squeeze(1)
 
         return output_fm + output_dnn
+    
+
+
+class RoBERTa_Deep_FM(Text_DeepFM):
+    def __init__(self, args, data):
+        super(RoBERTa_Deep_FM, self).__init__(args, data)
+    
+    def forward(self, x):
+        return super().forward(x)
