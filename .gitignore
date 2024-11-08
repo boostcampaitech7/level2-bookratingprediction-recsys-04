@@ -1,5 +1,6 @@
-.github
 /data
 /venv
-.DS_Store
+__pycache__
+requirement.txt
 *baseline*
+.DS_Store
