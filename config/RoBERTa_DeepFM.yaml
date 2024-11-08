@@ -3,12 +3,12 @@ predict: False  # 예측할 경우 True로 설정
 checkpoint: 'saved/checkpoints/Roberta.pt'   # 예측 시 불러올 모델 경로
 seed: 0         # 시드 고정
 device: cuda    # 가능한 값 : cpu, cuda, mps
-model: RoBERTa_Deep_FM       # 모델 선택
+model: RoBERTa_DeepFM       # 모델 선택
 
 
 
 model_args:     # model에 해당하는 파라미터만 실질적으로 사용됩니다.
-    RoBERTa_Deep_FM:
+    RoBERTa_DeepFM:
         datatype: text      # basic, context, image, text 중 text 가능
         vector_create: False    # True: BERT를 통해 임베딩 벡터 생성 / False: 기존에 만든 벡터 사용
         embed_dim: 16           # sparse 벡터를 임베딩할 차원

@@ -1,2 +1,2 @@
 from .FM_Image import Image_FM, Image_DeepFM, ResNet_DeepFM
-from .FM_Text import Text_FM, Text_DeepFM, RoBERTa_Deep_FM, ELECTRA_Deep_FM
+from .FM_Text import Text_FM, Text_DeepFM, RoBERTa_DeepFM, ELECTRA_DeepFM
