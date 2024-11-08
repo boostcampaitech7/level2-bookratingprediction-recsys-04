@@ -108,9 +108,17 @@ class Text_DeepFM(nn.Module):
         return output_fm + output_dnn
     
 
+
 class ELECTRA_Deep_FM(Text_DeepFM):
     def __init__(self, args, data):
         super(ELECTRA_Deep_FM, self).__init__(args, data)
     
+    def forward(self, x):
+        return super().forward(x)
+      
+class RoBERTa_Deep_FM(Text_DeepFM):
+    def __init__(self, args, data):
+        super(RoBERTa_Deep_FM, self).__init__(args, data)
+        
     def forward(self, x):
         return super().forward(x)
