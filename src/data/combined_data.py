@@ -83,9 +83,9 @@ def combined_data_load(args):
     # CLIP 프로세서만 초기화 (모델은 제외)
     processor = CLIPProcessor.from_pretrained(args.model_args[args.model].pretrained_model)
 
-    # 사용할 특성 정의
-    user_features = ['location', 'age']
-    book_features = ['publisher', 'language', 'category', 'book_author']
+    # config에서 특성 정의 가져오기
+    user_features = args.dataset.features.user
+    book_features = args.dataset.features.book
     sparse_cols = ['user_id', 'isbn'] + list(set(user_features + book_features))
 
     # 텍스트 전처리
