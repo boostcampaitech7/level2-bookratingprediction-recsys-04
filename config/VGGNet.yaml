@@ -1,23 +1,9 @@
-# config.yaml
-# 직접 하이퍼파라미터를 추가하여 관리할 수 있습니다.
 
-memo: |-
-    남겨둘 메모가 있다면 여기에.
-    여러 줄로도 작성 가능
-    wandb 사용 시 wandb의 description으로 사용됩니다.
-
-
-# 아래의 일곱 항목들은 argparser로 받은 인자를 우선적으로 사용합니다.
-#   $ python main.py --config config.yaml --seed 2024
-#   과 같이 실행할 경우 seed는 0이 아닌 2024로 설정됩니다.
 predict: False  # 예측할 경우 True로 설정
 checkpoint: 'saved/checkpoints/FM_best.pt'   # 예측 시 불러올 모델 경로
 seed: 0         # 시드 고정
 device: cuda    # 가능한 값 : cpu, cuda, mps
-model: FM       # 모델 선택
-wandb: False                            # wandb 사용 여부
-wandb_project: 'book-rating-prediction' # wandb 프로젝트 이름
-run_name: ''                            # wandb 실행 이름. 빈 문자열일 경우 자동 생성
+model: VGGNet_DeepFM       # 모델 선택
 
 
 model_args:     # model에 해당하는 파라미터만 실질적으로 사용됩니다.
@@ -65,5 +51,5 @@ train:
     ckpt_dir: saved/checkpoint    # 모델 저장 경로
     submit_dir: saved/submit            # 예측 저장 경로
     save_best_model: True               # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
-    resume: False                               # 이어서 학습할 경우 True
-    resume_path: saved/checkpoint/FM_best.pt    # 이어서 학습할 모델 경로
+
+
