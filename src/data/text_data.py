@@ -8,15 +8,19 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer, AutoModel
 from .basic_data import basic_data_split
 
+
+
 def text_preprocessing(summary):
-    """기존 전처리 함수 유지"""
+     if isinstance(summary, pd.Series):
+        return summary.apply(lambda x: text_preprocessing(x))
+    
+    if pd.isna(summary):  # NaN 값 체크
+        return ""
     summary = re.sub("[^0-9a-zA-Z.,!?]", " ", summary)
     summary = re.sub("\s+", " ", summary)
     return summary
 
 def text_to_vector(text, tokenizer, model):
-    """ELECTRA에 맞게 수정된 텍스트 벡터화 함수"""
-    # ELECTRA는 [CLS]를 자동으로 추가하므로 별도 추가 불필요
     tokenized = tokenizer(
         text,
         max_length=512,
@@ -33,24 +37,6 @@ def text_to_vector(text, tokenizer, model):
     return sentence_embedding.squeeze(0).cpu().detach().numpy()
 
 def process_text_data(ratings, users, books, tokenizer, model,name, vector_create=False):
-    """
-    Parameters
-    ----------
-    users : pd.DataFrame
-        유저 정보에 대한 데이터 프레임을 입력합니다.
-    books : pd.DataFrame
-        책 정보에 대한 데이터 프레임을 입력합니다.
-    vector_create : bool
-        사전에 텍스트 데이터 벡터화가 된 파일이 있는지 여부를 입력합니다.
-
-    Returns
-    -------
-    `users_` : pd.DataFrame
-        각 유저가 읽은 책에 대한 요약 정보를 병합 및 벡터화하여 추가한 데이터 프레임을 반환합니다.
-
-    `books_` : pd.DataFrame
-        텍스트 데이터를 벡터화하여 추가한 데이터 프레임을 반환합니다.
-    """
     num2txt = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five']
     users_ = users.copy()
     books_ = books.copy()
@@ -88,6 +74,7 @@ def process_text_data(ratings, users, books, tokenizer, model,name, vector_creat
         np.save(f'./data/text_vector/{name}_book_summary_vector.npy', book_summary_vector_list)        
 
 
+
         print('Create User Summary Merge Vector')
         user_summary_merge_vector_list = []
         for books_read in tqdm(users_['books_read']):
@@ -118,14 +105,17 @@ def process_text_data(ratings, users, books, tokenizer, model,name, vector_creat
                                                          users_['user_id'].values.reshape(-1, 1),
                                                          np.asarray(user_summary_merge_vector_list, dtype=np.float32)
                                                         ], axis=1)
-        
+
         np.save(f'./data/text_vector/{name}_user_summary_merge_vector.npy', user_summary_merge_vector_list)        
+
         
     else:
         print('Check Vectorizer')
         print('Vector Load')
+
         book_summary_vector_list = np.load(f'./data/text_vector/{name}_book_summary_vector.npy', allow_pickle=True)
         user_summary_merge_vector_list = np.load(f'./data/text_vector/{name}_user_summary_merge_vector.npy', allow_pickle=True)
+
 
     book_summary_vector_df = pd.DataFrame({'isbn': book_summary_vector_list[:, 0]})
     book_summary_vector_df['book_summary_vector'] = list(book_summary_vector_list[:, 1:].astype(np.float32))
@@ -140,6 +130,7 @@ def process_text_data(ratings, users, books, tokenizer, model,name, vector_creat
 # Text_Dataset 클래스는 그대로 유지
 class Text_Dataset(Dataset):
     def __init__(self, user_book_vector, user_summary_vector, book_summary_vector, rating=None):
+
         self.user_book_vector = user_book_vector
         self.user_summary_vector = user_summary_vector
         self.book_summary_vector = book_summary_vector
@@ -161,14 +152,12 @@ class Text_Dataset(Dataset):
         }
 
 def text_data_load(args):
-    """ELECTRA 모델을 사용하도록 수정된 데이터 로드 함수"""
     users = pd.read_csv(args.dataset.data_path + 'users.csv')
     books = pd.read_csv(args.dataset.data_path + 'books.csv')
     train = pd.read_csv(args.dataset.data_path + 'train_ratings.csv')
     test = pd.read_csv(args.dataset.data_path + 'test_ratings.csv')
     sub = pd.read_csv(args.dataset.data_path + 'sample_submission.csv')
 
-    # ELECTRA 토크나이저와 모델 초기화
     tokenizer = AutoTokenizer.from_pretrained(args.model_args[args.model].pretrained_model)
     model = AutoModel.from_pretrained(args.model_args[args.model].pretrained_model).to(device=args.device)
     model.eval()

@@ -37,12 +37,26 @@ def train(args, model, dataloader, logger, setting):
         total_loss, train_len = 0, len(dataloader['train_dataloader'])
 
         for data in tqdm(dataloader['train_dataloader'], desc=f'[Epoch {epoch+1:02d}/{args.train.epochs:02d}]'):
-            if args.model_args[args.model].datatype == 'image':
-                x, y = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)], data['rating'].to(args.device)
+            if args.model_args[args.model].datatype == 'combined':
+                x = [
+                    data['user_book_vector'].to(args.device),
+                    {
+                        'input_ids': data['text_input'].to(args.device)
+                    },
+                    {
+                        'pixel_values': data['image_input'].to(args.device)
+                    }
+                ]
+                y = data['rating'].to(args.device)
+            elif args.model_args[args.model].datatype == 'image':
+                x = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)]
+                y = data['rating'].to(args.device)
             elif args.model_args[args.model].datatype == 'text':
-                x, y = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)], data['rating'].to(args.device)
-            else : 
+                x = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)]
+                y = data['rating'].to(args.device)
+            else:
                 x, y = data[0].to(args.device), data[1].to(args.device)
+                
             y_hat = model(x)
             loss = loss_fn(y_hat, y.float())
             optimizer.zero_grad()
@@ -71,7 +85,6 @@ def train(args, model, dataloader, logger, setting):
                 msg += f' | {metric}: {value:.3f}'
             print(msg)
             logger.log(epoch=epoch+1, train_loss=train_loss, valid_loss=valid_loss, valid_metrics=valid_metrics)
-
         else:  # valid 데이터가 없을 경우
             print(msg)
             logger.log(epoch=epoch+1, train_loss=train_loss)
@@ -97,12 +110,28 @@ def valid(args, model, dataloader, loss_fn):
     total_loss = 0
 
     for data in dataloader:
-        if args.model_args[args.model].datatype == 'image':
-            x, y = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)], data['rating'].to(args.device)
+
+        if args.model_args[args.model].datatype == 'combined':
+            x = [
+                data['user_book_vector'].to(args.device),
+                {
+                    'input_ids': data['text_input'].to(args.device)
+                },
+                {
+                    'pixel_values': data['image_input'].to(args.device)
+                }
+            ]
+            y = data['rating'].to(args.device)
+        elif args.model_args[args.model].datatype == 'image':
+            x = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)]
+            y = data['rating'].to(args.device)
         elif args.model_args[args.model].datatype == 'text':
-            x, y = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)], data['rating'].to(args.device)
-        else : 
-                x, y = data[0].to(args.device), data[1].to(args.device)
+            x = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)]
+            y = data['rating'].to(args.device)
+        else:
+            x, y = data[0].to(args.device), data[1].to(args.device)
+            
+
         y_hat = model(x)
         loss = loss_fn(y.float(), y_hat)
         total_loss += loss.item()
@@ -124,12 +153,24 @@ def test(args, model, dataloader, setting, checkpoint=None):
     
     model.eval()
     for data in dataloader['test_dataloader']:
-        if args.model_args[args.model].datatype == 'image':
+
+        if args.model_args[args.model].datatype == 'combined':
+            x = [
+                data['user_book_vector'].to(args.device),
+                {
+                    'input_ids': data['text_input'].to(args.device)
+                },
+                {
+                    'pixel_values': data['image_input'].to(args.device)
+                }
+            ]
+        elif args.model_args[args.model].datatype == 'image':
             x = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)]
         elif args.model_args[args.model].datatype == 'text':
             x = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)]
-        else : 
+        else:
             x = data[0].to(args.device)
+            
         y_hat = model(x)
         predicts.extend(y_hat.tolist())
     return predicts

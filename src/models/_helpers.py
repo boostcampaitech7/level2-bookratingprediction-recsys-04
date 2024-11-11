@@ -25,7 +25,6 @@ class FeaturesEmbedding(nn.Module):
 
         return self.embedding(x)  # (batch_size, num_fields, embed_dim)
 
-
 class FeaturesLinear(nn.Module):
     def __init__(self, field_dims:list, output_dim:int=1, bias:bool=True):
         super().__init__()
@@ -67,8 +66,23 @@ class FMLayer_Dense(nn.Module):
         sum_of_square = torch.sum(self.square(x), dim=1)
         
         return 0.5 * torch.sum(square_of_sum - sum_of_square, dim=1)
+class FMLayer_Sparse(nn.Module):
+    def __init__(self, field_dims:list, factor_dim:int):
+        super().__init__()
+        self.embedding = FeaturesEmbedding(field_dims, factor_dim)
+        self.fm = FMLayer_Dense()
 
 
+    def square(self, x):
+        return torch.pow(x,2)
+    
+
+    def forward(self, x: torch.Tensor):
+        x = self.embedding(x)
+        x = self.fm(x)
+        
+        return x
+    
 class MLP_Base(nn.Module):
     def __init__(self, input_dim, embed_dims, 
                  batchnorm=True, dropout=0.2, output_layer=False):
@@ -102,8 +116,55 @@ class MLP_Base(nn.Module):
         return self.mlp(x)
     
 
+class CNN_Base(nn.Module):
+    def __init__(self, input_size=(3, 64, 64), 
+                 channel_list=[8,16,32], kernel_size=3, stride=2, padding=1,
+                 dropout=0.2, batchnorm=True):
+        super().__init__()
+
+        # CNN 구조 : Conv2d -> BatchNorm2d -> ReLU -> Dropout 
+        #           -> Conv2d -> BatchNorm2d -> ReLU -> Dropout -> MaxPool2d -> ...
+        self.cnn = nn.Sequential()
+        in_channel_list = [input_size[0]] + channel_list[:-1]
+        for idx, (in_channel, out_channel) in enumerate(zip(in_channel_list, channel_list)):
+            self.cnn.add_module(f'conv{idx}', nn.Conv2d(in_channel, out_channel, kernel_size=kernel_size, stride=stride, padding=padding))
+            if batchnorm:
+                self.cnn.add_module(f'batchnorm{idx}', nn.BatchNorm2d(out_channel))
+            self.cnn.add_module(f'relu{idx}', nn.ReLU())
+            if dropout > 0:
+                self.cnn.add_module(f'dropout{idx}', nn.Dropout(p=dropout))
+            if idx % 2 == 1:
+                self.cnn.add_module(f'maxpool{idx}', nn.MaxPool2d(kernel_size=2, stride=2))
+
+        self.output_dim = self.compute_output_shape((1, *input_size))
+
+        self._initialize_weights()
 
 
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_uniform_(m.weight.data, nonlinearity='relu')
+                nn.init.constant_(m.bias.data, 0)
+            if isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight.data, 1)
+                nn.init.constant_(m.bias.data, 0)
+
+
+    def compute_output_shape(self, input_shape):
+        x = torch.rand(input_shape)
+        for layer in self.cnn:
+            x = layer(x)
+
+        return x.size()
+        
+
+    def forward(self, x):
+        x = self.cnn(x)  # (batch_size, out_channel, H, W)
+
+        return x
+
+      
 class Text_DeepFM(nn.Module):
     def __init__(self, args, data):
         super(Text_DeepFM, self).__init__()
