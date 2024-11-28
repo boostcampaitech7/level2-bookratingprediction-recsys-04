@@ -18,7 +18,10 @@ model_args:     # model에 해당하는 파라미터만 실질적으로 사용�
 dataset:
     data_path: data/    # 데이터셋 경로
     valid_ratio: 0.2    # Train / Vaildation split
-
+    features:
+        user: []
+        book: []
+        
 dataloader:
     batch_size: 1024    # 배치 사이즈
     shuffle: True       # 학습 데이터 셔플 여부
