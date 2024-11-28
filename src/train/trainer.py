@@ -1,9 +1,10 @@
 import os
 from tqdm import tqdm
 import torch
-from src.loss import loss as loss_module
 import torch.optim as optimizer_module
 import torch.optim.lr_scheduler as scheduler_module
+
+from src.loss import loss as loss_module
 
 
 METRIC_NAMES = {
@@ -48,12 +49,15 @@ def train(args, model, dataloader, logger, setting):
                     }
                 ]
                 y = data['rating'].to(args.device)
+
             elif args.model_args[args.model].datatype == 'image':
                 x = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)]
                 y = data['rating'].to(args.device)
+
             elif args.model_args[args.model].datatype == 'text':
                 x = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)]
                 y = data['rating'].to(args.device)
+
             else:
                 x, y = data[0].to(args.device), data[1].to(args.device)
                 
@@ -81,8 +85,10 @@ def train(args, model, dataloader, logger, setting):
                 metric_fn = getattr(loss_module, metric)().to(args.device)
                 valid_metric = valid(args, model, dataloader['valid_dataloader'], metric_fn)
                 valid_metrics[f'Valid {METRIC_NAMES[metric]}'] = valid_metric
+                
             for metric, value in valid_metrics.items():
                 msg += f' | {metric}: {value:.3f}'
+
             print(msg)
             logger.log(epoch=epoch+1, train_loss=train_loss, valid_loss=valid_loss, valid_metrics=valid_metrics)
         else:  # valid 데이터가 없을 경우
@@ -92,10 +98,12 @@ def train(args, model, dataloader, logger, setting):
         
         if args.train.save_best_model:
             best_loss = valid_loss if args.dataset.valid_ratio != 0 else train_loss
+
             if minimum_loss is None or minimum_loss > best_loss:
                 minimum_loss = best_loss
                 os.makedirs(args.train.ckpt_dir, exist_ok=True)
                 torch.save(model.state_dict(), f'{args.train.ckpt_dir}/{setting.save_time}_{args.model}_best.pt')
+
         else:
             os.makedirs(args.train.ckpt_dir, exist_ok=True)
             torch.save(model.state_dict(), f'{args.train.ckpt_dir}/{setting.save_time}_{args.model}_e{epoch:02}.pt')
@@ -122,16 +130,18 @@ def valid(args, model, dataloader, loss_fn):
                 }
             ]
             y = data['rating'].to(args.device)
+
         elif args.model_args[args.model].datatype == 'image':
             x = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)]
             y = data['rating'].to(args.device)
+
         elif args.model_args[args.model].datatype == 'text':
             x = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)]
             y = data['rating'].to(args.device)
+
         else:
             x, y = data[0].to(args.device), data[1].to(args.device)
             
-
         y_hat = model(x)
         loss = loss_fn(y.float(), y_hat)
         total_loss += loss.item()
@@ -141,17 +151,22 @@ def valid(args, model, dataloader, loss_fn):
 
 def test(args, model, dataloader, setting, checkpoint=None):
     predicts = list()
+
     if checkpoint:
         model.load_state_dict(torch.load(checkpoint, weights_only=True))
+
     else:
         if args.train.save_best_model:
             model_path = f'{args.train.ckpt_dir}/{setting.save_time}_{args.model}_best.pt'
+
         else:
             # best가 아닐 경우 마지막 에폭으로 테스트하도록 함
             model_path = f'{args.train.save_dir.checkpoint}/{setting.save_time}_{args.model}_e{args.train.epochs-1:02d}.pt'
+
         model.load_state_dict(torch.load(model_path, weights_only=True))
     
     model.eval()
+
     for data in dataloader['test_dataloader']:
 
         if args.model_args[args.model].datatype == 'combined':
@@ -164,13 +179,17 @@ def test(args, model, dataloader, setting, checkpoint=None):
                     'pixel_values': data['image_input'].to(args.device)
                 }
             ]
+
         elif args.model_args[args.model].datatype == 'image':
             x = [data['user_book_vector'].to(args.device), data['img_vector'].to(args.device)]
+
         elif args.model_args[args.model].datatype == 'text':
             x = [data['user_book_vector'].to(args.device), data['user_summary_vector'].to(args.device), data['book_summary_vector'].to(args.device)]
+        
         else:
             x = data[0].to(args.device)
             
         y_hat = model(x)
         predicts.extend(y_hat.tolist())
+
     return predicts

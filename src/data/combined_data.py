@@ -2,9 +2,10 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader, Dataset
 from transformers import CLIPProcessor
+from PIL import Image
+
 from .basic_data import basic_data_split
 from .text_data import text_preprocessing
-from PIL import Image
 
 class CLIPDataset(Dataset):
     def __init__(self, user_book_vector, text_data, image_paths, processor, rating=None):
