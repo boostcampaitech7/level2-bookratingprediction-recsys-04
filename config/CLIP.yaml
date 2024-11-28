@@ -15,7 +15,6 @@ model_args:     # model에 해당하는 파라미터만 실질적으로 사용�
         dropout: 0.3        # MLP_Base에서 드롭아웃 비율
         pretrained_model: 'openai/clip-vit-base-patch32'   # CLIP 사전학습 모델
         
-
 dataset:
     data_path: data/    # 데이터셋 경로
     valid_ratio: 0.2    # Train / Vaildation split

@@ -6,7 +6,6 @@ seed: 0         # 시드 고정
 device: cuda    # 가능한 값 : cpu, cuda, mps
 model: ResNet       # 모델 선택
 
-
 model_args:     # model에 해당하는 파라미터만 실질적으로 사용됩니다.
     ResNet:
         datatype: image     # basic, context, image, text 중 image 가능
@@ -15,7 +14,6 @@ model_args:     # model에 해당하는 파라미터만 실질적으로 사용�
         mlp_dims: [16, 32]          # MLP_Base의 히든 레이어 차원
         batchnorm: True        # MLP_Base에서 배치 정규화 사용 여부
         dropout: 0.2            # MLP_Base에서 드롭아웃 비율
-
 
 dataset:
     data_path: data/    # 데이터셋 경로
@@ -52,4 +50,3 @@ train:
     ckpt_dir: saved/checkpoint    # 모델 저장 경로
     submit_dir: saved/submit            # 예측 저장 경로
     save_best_model: True               # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
-
