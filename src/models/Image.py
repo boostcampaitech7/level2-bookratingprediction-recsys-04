@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+
 from ._helpers import Base_Image_DeepFM
 
 class VGGNet_DeepFM(Base_Image_DeepFM):

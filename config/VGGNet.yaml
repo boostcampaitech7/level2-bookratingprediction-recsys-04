@@ -1,13 +1,13 @@
+# config.yaml
 
 predict: False  # 예측할 경우 True로 설정
-checkpoint: 'saved/checkpoints/FM_best.pt'   # 예측 시 불러올 모델 경로
+checkpoint: 'saved/checkpoints/VGGNet.pt'   # 예측 시 불러올 모델 경로
 seed: 0         # 시드 고정
 device: cuda    # 가능한 값 : cpu, cuda, mps
-model: VGGNet_DeepFM       # 모델 선택
-
+model: VGGNet       # 모델 선택
 
 model_args:     # model에 해당하는 파라미터만 실질적으로 사용됩니다.
-    VGGNet_DeepFM:
+    VGGNet:
         datatype: image     # basic, context, image, text 중 image 가능
         embed_dim: 16       # sparse 벡터 및 이미지 벡터를 임베딩할 차원
         img_size: 64        # 이미지 전처리를 통해 조정할 이미지 크기 (64 -> 3x64x64)
@@ -19,7 +19,10 @@ model_args:     # model에 해당하는 파라미터만 실질적으로 사용�
 dataset:
     data_path: data/    # 데이터셋 경로
     valid_ratio: 0.2    # Train / Vaildation split
-
+    features:
+        user: []
+        book: []
+        
 dataloader:
     batch_size: 1024    # 배치 사이즈
     shuffle: True       # 학습 데이터 셔플 여부
@@ -51,5 +54,3 @@ train:
     ckpt_dir: saved/checkpoint    # 모델 저장 경로
     submit_dir: saved/submit            # 예측 저장 경로
     save_best_model: True               # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
-
-

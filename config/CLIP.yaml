@@ -1,31 +1,13 @@
 # config.yaml
-# 직접 하이퍼파라미터를 추가하여 관리할 수 있습니다.
 
-memo: |-
-    
-
-
-# 아래의 일곱 항목들은 argparser로 받은 인자를 우선적으로 사용합니다.
-#   $ python main.py --config config.yaml --seed 2024
-#   과 같이 실행할 경우 seed는 0이 아닌 2024로 설정됩니다.
 predict: False  # 예측할 경우 True로 설정
-checkpoint: 'saved/checkpoints/FM_best.pt'   # 예측 시 불러올 모델 경로
+checkpoint: 'saved/checkpoints/CLIP.pt'   # 예측 시 불러올 모델 경로
 seed: 0         # 시드 고정
 device: cuda    # 가능한 값 : cpu, cuda, mps
-model: FM       # 모델 선택
-wandb: False                            # wandb 사용 여부
-wandb_project: 'Book_Rating_Prediction' # wandb 프로젝트 이름
-run_name: ''                            # wandb 실행 이름. 빈 문자열일 경우 자동 생성
-
+model: CLIP       # 모델 선택
 
 model_args:     # model에 해당하는 파라미터만 실질적으로 사용됩니다.
-    DeepFM:
-        datatype: context   # basic, context, image, text, combiend 중 basic, context 가능
-        embed_dim: 16       # sparse 벡터를 임베딩할 차원
-        mlp_dims: [16, 32]  # MLP_Base의 히든 레이어 차원
-        batchnorm: True    # MLP_Base에서 배치 정규화 사용 여부
-        dropout: 0.2        # MLP_Base에서 드롭아웃 비율
-    CLIP_DeepFM:
+    CLIP:
         datatype: combined   # basic, context, image, text, combined 중 combined 사용
         embed_dim: 16       # sparse 벡터를 임베딩할 차원
         mlp_dims: [1024, 512, 256, 128]  # MLP_Base의 히든 레이어 차원 (CLIP 출력 차원이 크므로 더 큰 차원 사용)
@@ -33,7 +15,6 @@ model_args:     # model에 해당하는 파라미터만 실질적으로 사용�
         dropout: 0.3        # MLP_Base에서 드롭아웃 비율
         pretrained_model: 'openai/clip-vit-base-patch32'   # CLIP 사전학습 모델
         
-
 dataset:
     data_path: data/    # 데이터셋 경로
     valid_ratio: 0.2    # Train / Vaildation split
@@ -72,5 +53,7 @@ train:
     ckpt_dir: saved/checkpoint    # 모델 저장 경로
     submit_dir: saved/submit            # 예측 저장 경로
     save_best_model: True               # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
-    resume: False                               # 이어서 학습할 경우 True
-    resume_path: saved/checkpoint/FM_best.pt    # 이어서 학습할 모델 경로
+    # 새로 추가: 학습 안정화를 위한 설정
+    gradient_clipping: 1.0   # 그래디언트 클리핑 추가
+    early_stopping_patience: 5  # 조기 종료 인내 설정
+    warmup_epochs: 2        # 처음 2에폭은 learning rate를 서서히 증가

@@ -1,4 +1,3 @@
-
-from .DeepFM import DeepFM, CLIP_DeepFM
-from .FM_Image import Image_FM, Image_DeepFM, ResNet_DeepFM
-from .FM_Text import Text_FM, Text_DeepFM, RoBERTa_DeepFM, ELECTRA_DeepFM
+from .Image import VGGNet_DeepFM, ResNet_DeepFM
+from .Multimodal import CLIP_DeepFM
+from .Text import RoBERTa_DeepFM, ELECTRA_DeepFM

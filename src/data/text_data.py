@@ -6,37 +6,52 @@ from tqdm import tqdm
 import torch
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer, AutoModel
+
 from .basic_data import basic_data_split
+from .context_data import process_context_data
 
 
 
 def text_preprocessing(summary):
-     if isinstance(summary, pd.Series):
-        return summary.apply(lambda x: text_preprocessing(x))
-    
-    if pd.isna(summary):  # NaN 값 체크
+    if pd.isna(summary): 
         return ""
-    summary = re.sub("[^0-9a-zA-Z.,!?]", " ", summary)
-    summary = re.sub("\s+", " ", summary)
+    else :
+        summary = re.sub("[^0-9a-zA-Z.,!?]", " ", summary)
+        summary = re.sub("\s+", " ", summary)
     return summary
 
-def text_to_vector(text, tokenizer, model):
-    tokenized = tokenizer(
-        text,
-        max_length=512,
-        padding='max_length',
-        truncation=True,
-        return_tensors='pt'
-    ).to(model.device)
-    
-    with torch.no_grad():
-        outputs = model(**tokenized)
-        # ELECTRA는 last_hidden_state의 [CLS] 토큰 위치의 벡터를 사용
-        sentence_embedding = outputs.last_hidden_state[:, 0, :]
-    
-    return sentence_embedding.squeeze(0).cpu().detach().numpy()
+def text_to_vector(text, tokenizer, model,name):
 
-def process_text_data(ratings, users, books, tokenizer, model,name, vector_create=False):
+    if 'bert' in name :
+        text_ = "[CLS] " + text + " [SEP]"
+        tokenized = tokenizer.encode(text_, add_special_tokens=True)
+        token_tensor = torch.tensor([tokenized], device=model.device)
+        with torch.no_grad():
+            outputs = model(token_tensor)  # attention_mask를 사용하지 않아도 됨
+            ### BERT 모델의 경우, 최종 출력물의 사이즈가 (토큰길이, 임베딩=768)이므로, 이를 평균내어 사용하거나 pooler_output을 사용하여 [CLS] 토큰의 임베딩만 사용
+            # sentence_embedding = torch.mean(outputs.last_hidden_state[0], dim=0)  # 방법1) 모든 토큰의 임베딩을 평균내어 사용
+            sentence_embedding = outputs.pooler_output.squeeze(0)  # 방법2) pooler_output을 사용하여 맨 첫 토큰인 [CLS] 토큰의 임베딩만 사용
+        return sentence_embedding.cpu().detach().numpy() 
+    
+    else :
+        tokenized = tokenizer(
+            text,
+            max_length=512,
+            padding='max_length',
+            truncation=True,
+            return_tensors='pt'
+        ).to(model.device)
+        
+        with torch.no_grad():
+            outputs = model(**tokenized)
+            # ELECTRA는 last_hidden_state의 [CLS] 토큰 위치의 벡터를 사용
+            sentence_embedding = outputs.last_hidden_state[:, 0, :]
+        
+        return sentence_embedding.squeeze(0).cpu().detach().numpy()
+
+
+
+def process_text_data(ratings, users, books, tokenizer, model, name, vector_create=False):
     num2txt = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five']
     users_ = users.copy()
     books_ = books.copy()
@@ -63,7 +78,7 @@ def process_text_data(ratings, users, books, tokenizer, model,name, vector_creat
             # Summary: {summary}
             # '''
             prompt_ = f'Book Title: {title}\n Summary: {summary}\n'
-            vector = text_to_vector(prompt_, tokenizer, model)
+            vector = text_to_vector(prompt_, tokenizer, model,name)
             book_summary_vector_list.append(vector)
         
         book_summary_vector_list = np.concatenate([
@@ -98,7 +113,7 @@ def process_text_data(ratings, users, books, tokenizer, model,name, vector_creat
             for idx, (title, summary) in enumerate(zip(read_books['book_title'], read_books['summary'])):
                 summary = summary if len(summary) < 100 else f'{summary[:100]} ...'
                 prompt_ += f'{idx+1}. Book Title: {title}\n Summary: {summary}\n'
-            vector = text_to_vector(prompt_, tokenizer, model)
+            vector = text_to_vector(prompt_, tokenizer, model,name)
             user_summary_merge_vector_list.append(vector)
         
         user_summary_merge_vector_list = np.concatenate([
@@ -163,9 +178,10 @@ def text_data_load(args):
     model.eval()
     
     users_, books_ = process_text_data(train, users, books, tokenizer, model, args.model_args[args.model].pretrained_model,args.model_args[args.model].vector_create)
+    users_, books_ = process_context_data(users_, books_)
 
-    user_features = []
-    book_features = []
+    user_features = args.dataset.features.user
+    book_features = args.dataset.features.book
     sparse_cols = ['user_id', 'isbn'] + list(set(user_features + book_features) - {'user_id', 'isbn'})
     
     train_df = train.merge(books_, on='isbn', how='left')\

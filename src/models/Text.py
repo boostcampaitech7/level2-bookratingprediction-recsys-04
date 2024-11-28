@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
+
 from ._helpers import Text_DeepFM
-
-
 
 class ELECTRA_DeepFM(Text_DeepFM):
     def __init__(self, args, data):

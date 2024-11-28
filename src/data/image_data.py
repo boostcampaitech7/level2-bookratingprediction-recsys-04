@@ -1,9 +1,10 @@
 import pandas as pd
-from tqdm import tqdm
 from PIL import Image
-from torchvision.transforms import v2
+from tqdm import tqdm
 import torch
+from torchvision.transforms import v2
 from torch.utils.data import DataLoader, Dataset
+
 from .basic_data import basic_data_split
 
 
@@ -110,8 +111,8 @@ def image_data_load(args):
 
     # 유저 및 책 정보를 합쳐서 데이터 프레임 생성 (단, 베이스라인에서는 user_id, isbn, img_vector만 사용함)
     # 사용할 컬럼을 user_features와 book_features에 정의합니다. (단, 모두 범주형 데이터로 가정)
-    user_features = []
-    book_features = []
+    user_features = args.dataset.features.user
+    book_features = args.dataset.features.book
     sparse_cols = ['user_id', 'isbn'] + list(set(user_features + book_features) - {'user_id', 'isbn'})
 
     train_df = train.merge(books_, on='isbn', how='left')\
