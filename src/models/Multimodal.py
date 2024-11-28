@@ -5,7 +5,7 @@ from transformers import CLIPModel
 
 from ._helpers import FeaturesLinear, FeaturesEmbedding, FMLayer_Dense, MLP_Base
 
-class CLIP_DeepFM(nn.Module):
+class CLIP(nn.Module):
     def __init__(self, args, data):
         super().__init__()
         self.field_dims = data['field_dims']
