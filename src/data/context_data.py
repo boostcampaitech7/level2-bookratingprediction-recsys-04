@@ -95,11 +95,7 @@ def process_context_data(users, books):
                 fill_country = fill_country[0] if len(fill_country) > 0 else np.nan
                 users_.loc[idx, 'location_country'] = fill_country
                 users_.loc[idx, 'location_state'] = fill_state
-
-               
-    
-    users_ = users_.drop(['location'], axis=1)
-
+                
     return users_, books_
 
 
