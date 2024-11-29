@@ -181,7 +181,7 @@ def text_data_load(args):
     
     users_, books_ = process_text_data(train, users, books, tokenizer, model, args.model_args[args.model].pretrained_model,args.model_args[args.model].vector_create)
     users_, books_ = process_context_data(users_, books_)
-
+    
     user_features = args.dataset.features.user
     book_features = args.dataset.features.book
     sparse_cols = ['user_id', 'isbn'] + list(set(user_features + book_features) - {'user_id', 'isbn'})
@@ -190,9 +190,7 @@ def text_data_load(args):
                     .merge(users_, on='user_id', how='left')[sparse_cols + ['user_summary_merge_vector', 'book_summary_vector', 'rating']]
     test_df = test.merge(books_, on='isbn', how='left')\
                   .merge(users_, on='user_id', how='left')[sparse_cols + ['user_summary_merge_vector', 'book_summary_vector']]
-    all_df = pd.concat([train, test], axis=0)
-    
-    print(all_df.columns)
+    all_df = pd.concat([train_df, test_df], axis=0)
 
     label2idx, idx2label = {}, {}
     for col in sparse_cols:
