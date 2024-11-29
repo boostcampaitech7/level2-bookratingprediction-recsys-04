@@ -10,7 +10,7 @@ from transformers import AutoTokenizer, AutoModel
 from .basic_data import basic_data_split
 from .context_data import process_context_data
 
-
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 def text_preprocessing(summary):
     if pd.isna(summary): 
@@ -64,6 +64,8 @@ def process_text_data(ratings, users, books, tokenizer, model, name, vector_crea
     books_['review_count'] = books_['isbn'].map(ratings['isbn'].value_counts())
 
     users_['books_read'] = users_['user_id'].map(ratings.groupby('user_id')['isbn'].apply(list))
+    
+    sanitized_name = name.replace("/", "_")
 
     if vector_create:
         if not os.path.exists('./data/text_vector'):
@@ -86,7 +88,7 @@ def process_text_data(ratings, users, books, tokenizer, model, name, vector_crea
                                                 np.asarray(book_summary_vector_list, dtype=np.float32)
                                                 ], axis=1)
         
-        np.save(f'./data/text_vector/{name}_book_summary_vector.npy', book_summary_vector_list)        
+        np.save(f'./data/text_vector/{sanitized_name}_book_summary_vector.npy', book_summary_vector_list)        
 
 
 
@@ -121,15 +123,15 @@ def process_text_data(ratings, users, books, tokenizer, model, name, vector_crea
                                                          np.asarray(user_summary_merge_vector_list, dtype=np.float32)
                                                         ], axis=1)
 
-        np.save(f'./data/text_vector/{name}_user_summary_merge_vector.npy', user_summary_merge_vector_list)        
+        np.save(f'./data/text_vector/{sanitized_name}_user_summary_merge_vector.npy', user_summary_merge_vector_list)        
 
         
     else:
         print('Check Vectorizer')
         print('Vector Load')
 
-        book_summary_vector_list = np.load(f'./data/text_vector/{name}_book_summary_vector.npy', allow_pickle=True)
-        user_summary_merge_vector_list = np.load(f'./data/text_vector/{name}_user_summary_merge_vector.npy', allow_pickle=True)
+        book_summary_vector_list = np.load(f'./data/text_vector/{sanitized_name}_book_summary_vector.npy', allow_pickle=True)
+        user_summary_merge_vector_list = np.load(f'./data/text_vector/{sanitized_name}_user_summary_merge_vector.npy', allow_pickle=True)
 
 
     book_summary_vector_df = pd.DataFrame({'isbn': book_summary_vector_list[:, 0]})
@@ -179,7 +181,7 @@ def text_data_load(args):
     
     users_, books_ = process_text_data(train, users, books, tokenizer, model, args.model_args[args.model].pretrained_model,args.model_args[args.model].vector_create)
     users_, books_ = process_context_data(users_, books_)
-
+    
     user_features = args.dataset.features.user
     book_features = args.dataset.features.book
     sparse_cols = ['user_id', 'isbn'] + list(set(user_features + book_features) - {'user_id', 'isbn'})
@@ -188,7 +190,7 @@ def text_data_load(args):
                     .merge(users_, on='user_id', how='left')[sparse_cols + ['user_summary_merge_vector', 'book_summary_vector', 'rating']]
     test_df = test.merge(books_, on='isbn', how='left')\
                   .merge(users_, on='user_id', how='left')[sparse_cols + ['user_summary_merge_vector', 'book_summary_vector']]
-    all_df = pd.concat([train, test], axis=0)
+    all_df = pd.concat([train_df, test_df], axis=0)
 
     label2idx, idx2label = {}, {}
     for col in sparse_cols:
