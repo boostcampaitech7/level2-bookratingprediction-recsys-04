@@ -28,6 +28,7 @@
 │   └── submit
 │       ├── CLIP.csv
 │       ├── ELECTRA.csv
+│       ├── ensemble.csv
 │       ├── ResNet.csv
 │       ├── RoBERTa.csv
 │       └── VGGNet.csv
@@ -102,7 +103,7 @@
 
 |     | Public | Private |
 |--------|--------|--------|
-| CLIP Model|  2.1849 |  2.1780 |
+| CLIP |  2.1849 |  2.1780 |
 |esemble |  2.2149  | 2.2108 |
 
 
