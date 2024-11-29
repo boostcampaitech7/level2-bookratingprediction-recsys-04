@@ -10,7 +10,7 @@ from transformers import AutoTokenizer, AutoModel
 from .basic_data import basic_data_split
 from .context_data import process_context_data
 
-
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 def text_preprocessing(summary):
     if pd.isna(summary): 
