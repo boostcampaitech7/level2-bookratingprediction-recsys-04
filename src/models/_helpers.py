@@ -222,7 +222,6 @@ class Text_DeepFM(nn.Module):
         return output_fm + output_dnn
     
 
-
 class Base_Image_DeepFM(nn.Module):
     def __init__(self, args, data, image_model, image_feature_dim):
         super().__init__()
@@ -234,9 +233,6 @@ class Base_Image_DeepFM(nn.Module):
 
         # sparse feature를 dense하게 임베딩하는 부분
         self.embedding = FeaturesEmbedding(self.field_dims, args.embed_dim)
-
-        # 텍스트 임베딩 부분 (텍스트 특성이 있을 경우에만 사용)
-        self.text_embedding = nn.Linear(args.word_dim, args.embed_dim) if hasattr(args, 'word_dim') else None
 
         # 이미지 모델 설정
         self.image_model = image_model
@@ -250,8 +246,7 @@ class Base_Image_DeepFM(nn.Module):
 
         # deep network를 통해 dense feature를 학습하는 부분
         input_dim = (self.embed_dim * len(self.field_dims)) + image_feature_dim
-        if self.text_embedding:  # 텍스트 임베딩이 있으면 추가
-            input_dim += 2 * args.word_dim
+
         self.deep = MLP_Base(
             input_dim=input_dim,
             embed_dims=args.mlp_dims,
@@ -263,8 +258,6 @@ class Base_Image_DeepFM(nn.Module):
     def forward(self, x):
         user_book_vector = x[0]
         img_vector = x[1]
-        user_text_vector = x[2] if self.text_embedding else None
-        book_text_vector = x[3] if self.text_embedding else None
 
         # first-order interaction / sparse feature only
         first_order = self.linear(user_book_vector)  # (batch_size, 1)
@@ -281,10 +274,6 @@ class Base_Image_DeepFM(nn.Module):
 
         # text to dense (optional)
         dense_feature_fm = [user_book_embedding, img_feature_fm]
-        if self.text_embedding:
-            user_text_feature = self.text_embedding(user_text_vector).view(-1, 1, self.embed_dim)
-            item_text_feature = self.text_embedding(book_text_vector).view(-1, 1, self.embed_dim)
-            dense_feature_fm.extend([user_text_feature, item_text_feature])
 
         # second-order interaction / dense feature
         dense_feature_fm = torch.cat(dense_feature_fm, dim=1)
@@ -293,9 +282,8 @@ class Base_Image_DeepFM(nn.Module):
 
         # deep network를 통해 feature를 학습하는 부분
         dense_feature_deep = [user_book_embedding.view(user_book_embedding.size(0), -1), img_feature_deep]
-        if self.text_embedding:
-            dense_feature_deep.extend([user_text_vector, book_text_vector])
         dense_feature_deep = torch.cat(dense_feature_deep, dim=1)
         output_dnn = self.deep(dense_feature_deep).squeeze(1)
 
         return output_fm + output_dnn
+
