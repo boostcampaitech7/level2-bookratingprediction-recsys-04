@@ -1,0 +1,59 @@
+# config.yaml
+
+predict: False
+checkpoint: 'saved/checkpoints/ELECTRA.pt'
+seed: 0
+device: cuda # m1칩 mac 경우 'mps'
+model: ELECTRA
+
+model_args:
+    ELECTRA:
+        datatype: text
+        vector_create: True # vector 생성 옵션
+        embed_dim: 64               # 증가 (16 -> 64): 더 풍부한 특성 표현
+        pretrained_model: 'google/electra-base-discriminator'
+        word_dim: 768
+        mlp_dims: [256, 128, 64, 32]  # 더 깊은 네트워크
+        batchnorm: True
+        dropout: 0.3               # 약간 증가 (0.2 -> 0.3): 과적합 방지 강화
+
+dataset:
+    data_path: data/    
+    valid_ratio: 0.2    
+    features:
+        user: []
+        book: []
+
+dataloader:
+    batch_size: 512     # 감소 (1024 -> 512): 더 안정적인 학습
+    shuffle: True       
+    num_workers: 4      
+
+optimizer:
+    type: AdamW        # 변경 (Adam -> AdamW): 가중치 감쇠가 더 효과적
+    args:
+        lr: 1e-4       # lr 조정 (5e-4 -> 1e-4)
+        weight_decay: 1e-2   # 증가 (1e-6 -> 1e-2): 더 강한 정규화
+        betas: [0.9, 0.999]  # AdamW 기본값
+        eps: 1e-8
+        correct_bias: True    # Adam bias correction 사용
+
+loss: RMSELoss
+
+lr_scheduler:
+    use: True
+    type: CosineAnnealingWarmRestarts  # 변경: 더 효과적인 learning rate 조절
+    args:
+        T_0: 5                # 초기 주기 (에폭 단위)
+        T_mult: 2             # 주기 증가 배율
+        eta_min: 1e-6         # 최소 learning rate
+        last_epoch: -1
+
+metrics: [RMSELoss, MSELoss, MAELoss]
+
+train:
+    epochs: 30               # 증가 (20 -> 30): 충분한 학습 시간 확보
+    log_dir: saved/electra_log
+    ckpt_dir: saved/electra_checkpoint
+    submit_dir: saved/electra_submit
+    save_best_model: True
